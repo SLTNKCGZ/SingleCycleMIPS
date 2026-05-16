@@ -12,7 +12,7 @@ datac,
 out2,       //Output of mux with ALUSrc control-mult2
 out3,       //Output of mux with MemToReg control-mult3
 out4,       //Output of mux with (Branch&ALUZero) control-mult4
-out5,       //Output of swand Data Memory MUX
+out5,       //Output of swand/swinc Data Memory MUX
 sum,        //ALU result
 extad,      //Output of sign-extend unit
 adder1out,  //Output of adder which adds PC and 4-add1
@@ -38,9 +38,12 @@ wire [2:0] gout;    //Output of ALU control unit
 
 wire zout, gt, lt, eq, pcsrc; // Control flags
 
-//Control signals
-wire regdest, alusrc, beqm, lwslt, swand, memtoreg, regwrite, memread, memwrite, branch, aluop1, aluop0;
+//Control signals (swinc buraya eklendi)
+wire regdest, alusrc, beqm, lwslt, swand, swinc, memtoreg, regwrite, memread, memwrite, branch, aluop1, aluop0;
 wire use_shamt, ifBeqm;
+
+// YENİ EKLENDİ: $rt + 1 donanım kablosu
+wire [31:0] rt_plus_1;
 
 //32-size register file
 reg [31:0] registerfile[0:31];
@@ -81,14 +84,20 @@ assign dpack = {datmem[sum[6:0]], datmem[sum[6:0]+1], datmem[sum[6:0]+2], datmem
 assign ifBeqm = beqm && eq; 
 assign use_shamt = lwslt | beqm; 
 
+// YENİ EKLENDİ: rt + 1 hesabını yapan donanım
+assign rt_plus_1 = datab + 32'd1;
+
 //multiplexers
 mult2_to_1_5  mult1(out1, instruc[20:16], instruc[15:11], regdest); 
 mult3_to_1_32 mult2(out2, datab, extad, sextshamt, use_shamt, alusrc);
 mult3_to_1_32 mult3(out3, sum, dpack, {31'b0, lt}, lwslt, memtoreg);
 mult3_to_1_32 mult4(out4, adder1out, adder2out, datac, ifBeqm, pcsrc);
 
-// Data Memory "Write Data" girisini secen 32-bit MUX
-mult2_to_1_32 mult5(out5, datab, datac, swand); 
+// YENİ EKLENDİ: Data Memory Write Data MUX'ı güncellendi
+// 00 ise: datab (Normal sw)
+// 01 ise: rt_plus_1 (Bizim swinc komutu)
+// 10 ise: datac (Arkadaşın swand komutu)
+mult3_to_1_32 mult5(out5, datab, rt_plus_1, datac, swand, swinc); 
 
 // load pc
 always @(negedge clk)
@@ -106,7 +115,7 @@ adder add1(pc, 32'h4, adder1out);
 //adder which adds PC+4 and 2 shifted sign-extend result
 adder add2(adder1out, sextad, adder2out);
 
-// Control unit
+// Control unit (swinc sinyali bağlantısı eklendi)
 control cont(
     instruc[31:26], 
     instruc[5:0], 
@@ -114,7 +123,8 @@ control cont(
     aluop1, aluop0, 
     lwslt,
     beqm,
-    swand
+    swand,
+    swinc
 );
 
 //Sign extend unit
@@ -123,7 +133,7 @@ signext sext(instruc[15:0], extad);
 //sign_extend unit of shamt
 signExtend5_to_32 sext2(instruc[10:6], sextshamt);
 
-//ALU control unit (Typo duzeltildi: instruc[5])
+//ALU control unit
 alucont acont(aluop1, aluop0, instruc[5], instruc[4], instruc[3], instruc[2], instruc[1], instruc[0], gout);
 
 //Shift-left 2 unit
@@ -132,27 +142,25 @@ shift shift2(sextad, extad);
 //AND gate
 assign pcsrc = branch && zout; 
 
-//initialize datamemory,instruction memory and registers
+// YENİ DÜZENLEME: Hata vermemesi için dosya yolları kısaltıldı!
 initial
 begin
-$readmemh("C:/Users/Lenovo/Documents/Projeler/CompOrg2/singlecycleMIPS/singlecycleMIPS-lite-commented/initDm.dat", datmem); 
-$readmemh("C:/Users/Lenovo/Documents/Projeler/CompOrg2/singlecycleMIPS/singlecycleMIPS-lite-commented/initIM.dat", mem);
-$readmemh("C:/Users/Lenovo/Documents/Projeler/CompOrg2/singlecycleMIPS/singlecycleMIPS-lite-commented/initReg.dat", registerfile);
+$readmemh("initDm.dat", datmem); 
+$readmemh("initIM.dat", mem);
+$readmemh("initReg.dat", registerfile);
 
     for(i=0; i<31; i=i+1)
     $display("Instruction Memory[%0d]= %h  Data Memory[%0d]= %h   Register[%0d]= %h", i, mem[i], i, datmem[i], i, registerfile[i]);
 end
-
 initial
 begin
 pc = 0;
-#400 $finish;
+#400 $stop;
 end
 
 initial
 begin
 clk = 0;
-//40 time unit for each cycle
 forever #20  clk = ~clk;
 end
 
