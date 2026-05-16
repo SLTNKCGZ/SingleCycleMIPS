@@ -27,7 +27,7 @@ inst20_16,  //20-16 bits of instruction
 inst10_6,   //10-6 bits of instruction
 inst15_11;  //15-11 bits of instruction
 
-wire [4:0] out1; // Register adresleri 5 bittir
+wire [4:0] out1; 
 
 wire [15:0] inst15_0;   //15-0 bits of instruction
 
@@ -38,11 +38,11 @@ wire [2:0] gout;    //Output of ALU control unit
 
 wire zout, gt, lt, eq, pcsrc; // Control flags
 
-//Control signals (swinc buraya eklendi)
+//Control signals 
 wire regdest, alusrc, beqm, lwslt, swand, swinc, memtoreg, regwrite, memread, memwrite, branch, aluop1, aluop0;
 wire use_shamt, ifBeqm;
 
-// YENİ EKLENDİ: $rt + 1 donanım kablosu
+// $rt + 1 
 wire [31:0] rt_plus_1;
 
 //32-size register file
@@ -53,7 +53,7 @@ integer i;
 always @(posedge clk)
 if (memwrite)
 begin 
-    // MUX'tan gelen out5 verisini byte byte bellege yaziyoruz
+    
     datmem[sum[6:0]+3] = out5[7:0];
     datmem[sum[6:0]+2] = out5[15:8];
     datmem[sum[6:0]+1] = out5[23:16];
@@ -80,11 +80,11 @@ always @(posedge clk)
 //read data from memory, sum stores address
 assign dpack = {datmem[sum[6:0]], datmem[sum[6:0]+1], datmem[sum[6:0]+2], datmem[sum[6:0]+3]};
 
-// Isaret (Signal) Tanimlamalari
+// Signals
 assign ifBeqm = beqm && eq; 
 assign use_shamt = lwslt | beqm; 
 
-// YENİ EKLENDİ: rt + 1 hesabını yapan donanım
+// rt + 1 
 assign rt_plus_1 = datab + 32'd1;
 
 //multiplexers
@@ -93,10 +93,9 @@ mult3_to_1_32 mult2(out2, datab, extad, sextshamt, use_shamt, alusrc);
 mult3_to_1_32 mult3(out3, sum, dpack, {31'b0, lt}, lwslt, memtoreg);
 mult3_to_1_32 mult4(out4, adder1out, adder2out, datac, ifBeqm, pcsrc);
 
-// YENİ EKLENDİ: Data Memory Write Data MUX'ı güncellendi
-// 00 ise: datab (Normal sw)
-// 01 ise: rt_plus_1 (Bizim swinc komutu)
-// 10 ise: datac (Arkadaşın swand komutu)
+// 00 ise: datab 
+// 01 ise: rt_plus_1 
+// 10 ise: datac 
 mult3_to_1_32 mult5(out5, datab, rt_plus_1, datac, swand, swinc); 
 
 // load pc
@@ -115,7 +114,7 @@ adder add1(pc, 32'h4, adder1out);
 //adder which adds PC+4 and 2 shifted sign-extend result
 adder add2(adder1out, sextad, adder2out);
 
-// Control unit (swinc sinyali bağlantısı eklendi)
+// Control unit 
 control cont(
     instruc[31:26], 
     instruc[5:0], 
@@ -142,7 +141,6 @@ shift shift2(sextad, extad);
 //AND gate
 assign pcsrc = branch && zout; 
 
-// YENİ DÜZENLEME: Hata vermemesi için dosya yolları kısaltıldı!
 initial
 begin
 $readmemh("initDm.dat", datmem); 
