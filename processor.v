@@ -37,9 +37,10 @@ dpack;          //Read data output of memory (data read from memory)
 wire [2:0] gout;    //Output of ALU control unit
 
 wire zout, gt, lt, eq, pcsrc; // Control flags
+wire neg, ovfl; 
 
 //Control signals 
-wire regdest, alusrc, beqm, lwslt, swand, swinc, memtoreg, regwrite, memread, memwrite, branch, aluop1, aluop0;
+wire regdest, alusrc, beqm, lwslt, swand, swinc, swv, memtoreg, regwrite, memread, memwrite, branch, aluop1, aluop0;
 wire use_shamt, ifBeqm;
 
 // $rt + 1 
@@ -49,15 +50,33 @@ wire [31:0] rt_plus_1;
 reg [31:0] registerfile[0:31];
 integer i;
 
+// STATUS REGISTER (SR)
+
+reg status_Z, status_N, status_V;
+always @(posedge clk) begin
+    status_Z <= zout;
+    status_N <= neg;
+    status_V <= ovfl;
+end
+
+// MemAddrSrc MUX 
+
+wire [31:0] mem_address;
+assign mem_address = swv ? dataa : sum;
+
+// FinalMemWrite 
+
+wire final_memwrite;
+assign final_memwrite = memwrite | (swv & status_V);
+
 // datamemory connections
 always @(posedge clk)
-if (memwrite)
+if (final_memwrite) 
 begin 
-    
-    datmem[sum[6:0]+3] = out5[7:0];
-    datmem[sum[6:0]+2] = out5[15:8];
-    datmem[sum[6:0]+1] = out5[23:16];
-    datmem[sum[6:0]]   = out5[31:24];
+    datmem[mem_address[6:0]+3] = out5[7:0];
+    datmem[mem_address[6:0]+2] = out5[15:8];
+    datmem[mem_address[6:0]+1] = out5[23:16];
+    datmem[mem_address[6:0]]   = out5[31:24];
 end
 
 //instruction memory
@@ -77,8 +96,8 @@ assign datac = registerfile[inst15_11]; //Read register 3
 always @(posedge clk)
  registerfile[out1] = regwrite ? out3 : registerfile[out1]; 
 
-//read data from memory, sum stores address
-assign dpack = {datmem[sum[6:0]], datmem[sum[6:0]+1], datmem[sum[6:0]+2], datmem[sum[6:0]+3]};
+//read data from memory, mem_address stores address
+assign dpack = {datmem[mem_address[6:0]], datmem[mem_address[6:0]+1], datmem[mem_address[6:0]+2], datmem[mem_address[6:0]+3]};
 
 // Signals
 assign ifBeqm = beqm && eq; 
@@ -106,7 +125,7 @@ pc = out4;
 comparator32 comp1(gt, lt, eq, datab, dpack);
 
 //ALU unit
-alu32 alu1(sum, dataa, out2, zout, gout);
+alu32 alu1(sum, dataa, out2, zout, neg, ovfl, gout);
 
 //adder which adds PC and 4
 adder add1(pc, 32'h4, adder1out);
@@ -123,7 +142,8 @@ control cont(
     lwslt,
     beqm,
     swand,
-    swinc
+    swinc,
+    swv 
 );
 
 //Sign extend unit
@@ -164,7 +184,7 @@ end
 
 initial 
 begin
-$monitor($time," PC %h gout %h alu result %h out2 %h dataa %h, datab %h, datac %h out5 %h INST %h  swand=%b  MEM[12-15]=%h%h%h%h ", 
-         pc, gout, sum, out2, dataa, datab,datac, out5, instruc[31:0], swand, datmem[12], datmem[13], datmem[14], datmem[15] );
+$monitor($time," PC %h gout %h alu result %h out2 %h dataa %h, datab %h out5 %h INST %h  swv=%b V=%b MEM[12-15]=%h%h%h%h MEM[16-19]=%h%h%h%h", 
+         pc, gout, sum, out2, dataa, datab, out5, instruc[31:0], swv, status_V, datmem[12], datmem[13], datmem[14], datmem[15], datmem[16], datmem[17], datmem[18], datmem[19] );
 end
 endmodule
