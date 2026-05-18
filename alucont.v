@@ -3,7 +3,7 @@ module alucont(aluop1, aluop0, f5, f4, f3, f2, f1, f0, gout);
     output reg [2:0] gout;
 
     always @(*) begin
-        // Varsay?lan durumlar
+        // Varsayilan durumlar
         if (~(aluop1 | aluop0)) gout = 3'b010; // Load/Store için toplama (Add)
         else if (aluop0)        gout = 3'b110; // Normal Branch için ç?karma (Sub)
         else if (aluop1) begin // R-type

@@ -1,64 +1,40 @@
-module control(in, funct, regdest, alusrc, memtoreg, regwrite, memread, memwrite, branch, aluop1, aluop0, lwslt, beqm, swand);
-
+module control(in, funct, regdest, alusrc, memtoreg, regwrite, memread, memwrite, branch, aluop1, aluop0, lwslt, beqm, 
+swand, swinc, swv, bnpos, balerr);
+    input [5:0] in;     
+    input [5:0] funct;  
     
-
-    input [5:0] in;     // Opcode (instruc[31:26])
-
-    input [5:0] funct;  // Function code (instruc[5:0])
-
+    // YENI: MUX'lari yonetecek 2-bitlik secici sinyaller
+    output [1:0] memtoreg;
     
-
-    // Ç?k??lar (aluop2 yerine genel standart olan aluop0 ismini kulland?m)
-
-    output regdest, alusrc, memtoreg, regwrite, memread, memwrite, branch, aluop1, aluop0, lwslt, beqm, swand;
-
+    output alusrc, regwrite, regdest, memread, memwrite, branch, aluop1, aluop0, lwslt, beqm, swand, swinc, swv, bnpos, balerr;
     
-
     wire rformat, lw, sw, beq;
 
+    assign rformat = ~|in; 
+    assign lw      =  in[5] & ~in[4] & ~in[3] & ~in[2] &  in[1] &  in[0]; 
+    assign sw      =  in[5] & ~in[4] &  in[3] & ~in[2] &  in[1] &  in[0]; 
+    assign beq     = ~in[5] & ~in[4] & ~in[3] &  in[2] & ~in[1] & ~in[0]; 
 
+    assign lwslt  = rformat & (funct == 6'b010100); 
+    assign beqm   = rformat & (funct == 6'b011000); 
+    assign swand  = rformat & (funct == 6'b101101);
+    assign swinc  =  in[5] & ~in[4] &  in[3] &  in[2] & ~in[1] & ~in[0];
+    assign swv    =  in[5] & ~in[4] & ~in[3] &  in[2] &  in[1] &  in[0];
+    assign bnpos  = ~in[5] &  in[4] &  in[3] & ~in[2] & ~in[1] & ~in[0];
+    assign balerr =  in[5] & ~in[4] &  in[3] &  in[2] &  in[1] &  in[0];
 
-    // Opcode tan?mlamalar?
-
-    assign rformat = ~|in; // in == 000000
-
-    assign lw      =  in[5] & ~in[4] & ~in[3] & ~in[2] &  in[1] &  in[0]; // 100011
-
-    assign sw      =  in[5] & ~in[4] &  in[3] & ~in[2] &  in[1] &  in[0]; // 101011
-
-    assign beq     = ~in[5] & ~in[4] & ~in[3] &  in[2] & ~in[1] & ~in[0]; // 000100
-
-
-
-    // --- LWSLT Sinyalinin Üretilmesi ---
-
-    // E?er komut R-format ise VE funct 20 (Binary: 010100) ise lwslt 1 olur.
-
-    assign lwslt = rformat & (funct == 6'b010100);
-
-    assign beqm = rformat & (funct == 6'b011000);
-
-    assign swand = rformat & (funct == 6'b101101);
-
-
-
-    // --- Kontrol Sinyali Atamalar? ---
-
-    assign regdest  = rformat;         
-    assign alusrc   = lw | sw;         
-    assign memtoreg = lw;              
+   
+    // memtoreg[1:0] -> 00: ALU, 01: Memory(lw), 10: lt(lwslt), 11: PC+4(balerr)
+    assign memtoreg[1] = lwslt | balerr;
+    assign memtoreg[0] = lw | balerr;
     
-    // D?KKAT: beqm bir branch komutudur, Register'a YAZMA YAPMAZ!
-    assign regwrite = (rformat & ~beqm & ~swand) | lw; 
-    
-    // D?KKAT: lwslt ve beqm bellekten veri okumak zorundad?r
+    // =========================================================
+    assign regdest  = rformat; 
+    assign alusrc   = lw | sw | swinc | swv;         
+    assign regwrite = (rformat & ~beqm & ~swand) | lw | balerr; 
     assign memread  = lw | lwslt | beqm;      
-    
-    assign memwrite = sw | swand;
+    assign memwrite = sw | swand | swinc | swv;
     assign branch   = beq;
     assign aluop1   = rformat;         
-    assign aluop0   = beq;
-
-
-
+    assign aluop0   = beq;             
 endmodule
