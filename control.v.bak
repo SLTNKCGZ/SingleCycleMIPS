@@ -32,7 +32,7 @@ swand, swinc, swv, bnpos, balerr);
     
     // =========================================================
     assign regdest  = rformat; 
-    assign alusrc   = lw | sw | swinc;         
+    assign alusrc   = lw | sw | swinc | swv;         
     assign regwrite = (rformat & ~beqm & ~swand) | lw | balerr; 
     assign memread  = lw | lwslt | beqm;      
     assign memwrite = sw | swand | swinc | swv;

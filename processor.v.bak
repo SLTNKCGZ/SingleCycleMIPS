@@ -180,7 +180,6 @@ $readmemh("C:/Users/Lenovo/Documents/Projeler/CompOrg2/SingleCycleMIPS/initDm.da
 $readmemh("C:/Users/Lenovo/Documents/Projeler/CompOrg2/SingleCycleMIPS/initIM.dat", mem);
 $readmemh("C:/Users/Lenovo/Documents/Projeler/CompOrg2/SingleCycleMIPS/initReg.dat", registerfile);
 
-//Content of memories and register file
 for(i=0; i<31; i=i+1)
     $display("Instruction Memory[%0d]= %h  Data Memory[%0d]= %h   Register[%0d]= %h", i, mem[i], i, datmem[i], i, registerfile[i]);
 end
@@ -188,8 +187,6 @@ end
 initial
 begin
 pc = 0;
-//assign status register
-//status = 3'b111;
 #400 $finish;
 end
 
@@ -201,7 +198,7 @@ end
 
 initial 
 begin
-$monitor($time," PC %h  INST %h  STAT=%b  do_j=%b  MEM[8]=%h  MEM[12]=%h", //Test statements
+$monitor($time," PC %h  INST %h  STAT=%b  do_j=%b  MEM[8]=%h  MEM[12]=%h", 
          pc, instruc[31:0], status, do_j_branch, 
          {datmem[8], datmem[9], datmem[10], datmem[11]},
          {datmem[12], datmem[13], datmem[14], datmem[15]});
