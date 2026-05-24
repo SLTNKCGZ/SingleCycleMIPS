@@ -15,6 +15,7 @@ out3,       //Output of mux with MemToReg control-mult3
 out4,       //Output of mux with (Branch&ALUZero) control-mult4
 out5,       //Output of swand Data Memory MUX
 result,     //ALU result
+mem_addr;   // actual address going to data memory
 extad,      //Output of sign-extend unit
 adder1out,  //Output of adder which adds PC and 4-add1
 adder2out,  //Output of adder which adds PC+4 and 2 shifted sign-extend result-add2
@@ -59,18 +60,17 @@ integer i;
 
 // Status Register Guncelleme
 always @(posedge clk) begin
-    if (aluop1) 
-        status <= {vout, nout, zout};
+    status <= {vout, nout, zout};
 end
 
 // datamemory connections
 always @(posedge clk)
 if (newmemwrite)
 begin    
-        datmem[result[6:0]+3] = out5[7:0];
-        datmem[result[6:0]+2] = out5[15:8];
-        datmem[result[6:0]+1] = out5[23:16];
-        datmem[result[6:0]]   = out5[31:24];    
+    datmem[mem_addr[6:0]+3] = out5[7:0];
+    datmem[mem_addr[6:0]+2] = out5[15:8];
+    datmem[mem_addr[6:0]+1] = out5[23:16];
+    datmem[mem_addr[6:0]]   = out5[31:24];   
 end
 
 //instruction memory assignments
@@ -92,7 +92,7 @@ always @(posedge clk)
  registerfile[out1] = regwrite ? out3 : registerfile[out1]; 
 
 //read data from memory
-assign dpack = {datmem[result[6:0]], datmem[result[6:0]+1], datmem[result[6:0]+2], datmem[result[6:0]+3]};
+assign dpack = {datmem[mem_addr[6:0]], datmem[mem_addr[6:0]+1], datmem[mem_addr[6:0]+2], datmem[mem_addr[6:0]+3]};
 
 
 // Calculate the jump address
@@ -105,6 +105,7 @@ mult4_to_1_32 mult3(out3, result, dpack, {31'b0, lt_and_lwslt},adder1out, memtor
 mult3_to_1_32 mult4(out4, adder1out, adder2out, datac, ifBeqm, pcsrc);  
 mult3_to_1_32 mult5(out5, datab, datac, swinc_add_out, swinc, swand);   
 mult2_to_1_32 mult6(next_pc, out4, j_target, do_j_branch);
+mult2_to_1_32 mult7(mem_addr, result, dataa, swv);
 
 // load pc
 always @(negedge clk)
