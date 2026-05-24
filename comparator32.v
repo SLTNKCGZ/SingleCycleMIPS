@@ -7,8 +7,8 @@ module comparator32(
 );
 
     
-    assign gt = (a > b);
-    assign lt = (a < b);
+    assign gt = ($signed(a) > $signed(b));
+    assign lt = ($signed(a) < $signed(b));
     assign eq = (a == b);
 
 endmodule
