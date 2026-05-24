@@ -167,7 +167,7 @@ assign bnpos_cond = status[0] | status[1];
 
 assign do_bnpos_branch = bnpos & bnpos_cond;
 
-//Status[Z] or Status[N] and Status[V]
+//Status[Z] and Status[N] and Status[V]
 assign balerr_cond = status[0] & status[1] & status[2]; 
 
 assign do_balerr_branch = balerr & balerr_cond;
