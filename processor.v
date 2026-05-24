@@ -189,8 +189,6 @@ end
 initial
 begin
 pc = 0;
-//assign status register
-//status = 3'b111;
 #400 $finish;
 end
 
