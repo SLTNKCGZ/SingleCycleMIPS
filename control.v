@@ -3,7 +3,7 @@ swand, swinc, swv, bnpos, balerr);
     input [5:0] in;     
     input [5:0] funct;  
     
-    // YENI: MUX'lari yonetecek 2-bitlik secici sinyaller
+    
     output [1:0] memtoreg;
     
     output alusrc, regwrite, regdest, memread, memwrite, branch, aluop1, aluop0, lwslt, beqm, 

@@ -6,7 +6,7 @@ module comparator32(
     input [31:0] b
 );
 
-    // Her bir ç?k?? için mant?ksal kar??la?t?rma:
+    
     assign gt = (a > b);
     assign lt = (a < b);
     assign eq = (a == b);
