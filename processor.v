@@ -182,7 +182,7 @@ $readmemh("C:/Users/Lenovo/Documents/Projeler/CompOrg2/SingleCycleMIPS/initIM.da
 $readmemh("C:/Users/Lenovo/Documents/Projeler/CompOrg2/SingleCycleMIPS/initReg.dat", registerfile);
 
 //Content of memories and register file
-for(i=0; i<31; i=i+1)
+for(i=0; i<32; i=i+1)
     $display("Instruction Memory[%0d]= %h  Data Memory[%0d]= %h   Register[%0d]= %h", i, mem[i], i, datmem[i], i, registerfile[i]);
 end
 
