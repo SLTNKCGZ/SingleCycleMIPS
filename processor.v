@@ -5,6 +5,9 @@ reg clk; //clock
 // 128 byte data and instruction memory
 reg [7:0] datmem[0:127], mem[0:127]; 
 reg [2:0] status; // status[2]=V, status[1]=N, status[0]=Z
+wire status_vout, status_nout, status_zout;
+
+assign {status_vout, status_nout, status_zout} = status;
 
 wire [31:0] 
 dataa,      //Read data 1 output of Register File
@@ -58,7 +61,7 @@ wire swv_memwrite;
 reg [31:0] registerfile[0:31];
 integer i;
 
-// Status Register Guncelleme
+// Status Register Update
 always @(posedge clk) begin
     status <= {vout, nout, zout};
 end
@@ -154,7 +157,7 @@ shift shift2(sextad, extad);
 //Gates
 assign pcsrc = branch && zout;
 
-assign swv_memwrite = !swv || status[2];
+assign swv_memwrite = !swv || status_vout;
 
 assign newmemwrite = memwrite && swv_memwrite;
 
@@ -163,18 +166,18 @@ assign ifBeqm = beqm && eq;
 assign lt_and_lwslt = lt && lwslt; 
 
 //Status[Z] or Status[N]
-assign bnpos_cond = status[0] | status[1]; 
+assign bnpos_cond = status_zout | status_nout; 
 
 assign do_bnpos_branch = bnpos & bnpos_cond;
 
 //Status[Z] and Status[N] and Status[V]
-assign balerr_cond = status[0] & status[1] & status[2]; 
+assign balerr_cond = status_zout &  status_nout & status_vout; 
 
 assign do_balerr_branch = balerr & balerr_cond;
 
 assign do_j_branch = do_bnpos_branch | do_balerr_branch;
 
-//initialize data memory,instruction memory and registers
+//initialize data memory, instruction memory and registers
 initial
 begin
 $readmemh("C:/Users/Lenovo/Documents/Projeler/CompOrg2/SingleCycleMIPS/initDm.dat", datmem); 
