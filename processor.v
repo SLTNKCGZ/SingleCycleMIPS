@@ -15,7 +15,7 @@ out3,       //Output of mux with MemToReg control-mult3
 out4,       //Output of mux with (Branch&ALUZero) control-mult4
 out5,       //Output of swand Data Memory MUX
 result,     //ALU result
-mem_addr;   // actual address going to data memory
+mem_addr,   // actual address going to data memory
 extad,      //Output of sign-extend unit
 adder1out,  //Output of adder which adds PC and 4-add1
 adder2out,  //Output of adder which adds PC+4 and 2 shifted sign-extend result-add2
